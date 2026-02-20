@@ -1,0 +1,1 @@
+"""Mouse cursor and tracking."""
