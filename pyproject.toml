@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools >= 61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "runtui"
+version = "0.1.0"
+description = "Modern pure-Python cross-platform TUI framework with RAD designer, themes, mouse support, embedded terminals, and rich widgets"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"} 
+authors = [
+  {name = "Erickrus", email = "hyinghao@hotmail.com"},
+]
+keywords = ["tui", "terminal-ui", "curses-alternative", "rad", "mouse", "widgets"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Software Development :: User Interfaces",
+]
+
+dependencies = []   # ← add real deps if any (probably almost none since pure Python)
+
+[project.urls]
+Homepage = "https://github.com/erickrus/runtui"
+Repository = "https://github.com/erickrus/runtui"
+"Bug Tracker" = "https://github.com/erickrus/runtui/issues"
+Documentation = "https://github.com/erickrus/runtui#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["runtui"]
