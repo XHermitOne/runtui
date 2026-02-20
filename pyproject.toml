@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"} 
 authors = [
-  {name = "Erickrus", email = "hyinghao@hotmail.com"},
+  {name = "Erickrus", email = "hyinghao@gmail.com"},
 ]
 keywords = ["tui", "terminal-ui", "curses-alternative", "rad", "mouse", "widgets"]
 classifiers = [
