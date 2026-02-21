@@ -5,7 +5,7 @@ import sys
 import os
 import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from runtui.core.types import Attrs, Color, Rect, BorderStyle, attrs_sequence
 from runtui.core.unicode import string_width, truncate_to_width
