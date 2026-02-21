@@ -36,6 +36,10 @@ pip install runtui
 python -m runtui.tui_os
 ```
 
+```bash
+python -m runtui.rad_designer
+```
+
 More examples in the [`examples/`](examples/) folder:
 
 - `cal.py`               — Calendar
