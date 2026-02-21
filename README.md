@@ -28,11 +28,7 @@ Works seamlessly on **Linux**, **macOS**, and **Windows**
 ## Installation
 
 ```bash
-git clone https://github.com/Erickrus/runtui.git
-cd runtui
-pip install -e .
-# or
-pip install .
+pip install runtui
 ```
 
 More examples in the [`examples/`](examples/) folder:
