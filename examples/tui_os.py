@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 # Add parent dir to path
-# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import runtui
 from runtui import (
@@ -807,6 +807,71 @@ class EditorWindow:
         except Exception as e:
             self._status.text = f" Save error: {e}"
 
+    def _undo(self) -> None:
+        self._textarea._undo()
+
+    def _redo(self) -> None:
+        self._textarea._redo()
+
+    def _copy(self) -> None:
+        txt = self._textarea._get_selected_text()
+        if txt:
+            TextArea._shared_text_clipboard = txt
+
+    def _cut(self) -> None:
+        txt = self._textarea._get_selected_text()
+        if txt:
+            TextArea._shared_text_clipboard = txt
+            self._textarea._delete_selection()
+
+    def _paste(self) -> None:
+        ta = self._textarea
+        if not TextArea._shared_text_clipboard:
+            return
+        ta._delete_selection()
+        ta._save_undo()
+        clip_lines = TextArea._shared_text_clipboard.split("\n")
+        if len(clip_lines) == 1:
+            ta._insert_text(clip_lines[0])
+        else:
+            line = ta._lines[ta._cursor_row]
+            before = line[:ta._cursor_col]
+            after = line[ta._cursor_col:]
+            ta._lines[ta._cursor_row] = before + clip_lines[0]
+            for i, cl in enumerate(clip_lines[1:], 1):
+                if i == len(clip_lines) - 1:
+                    ta._lines.insert(ta._cursor_row + i, cl + after)
+                else:
+                    ta._lines.insert(ta._cursor_row + i, cl)
+            ta._cursor_row += len(clip_lines) - 1
+            ta._cursor_col = len(clip_lines[-1])
+            ta._desired_col = ta._cursor_col
+            ta._ensure_cursor_visible()
+            ta.invalidate()
+            ta._notify_change()
+
+    def _select_all(self) -> None:
+        ta = self._textarea
+        ta._sel_anchor = (0, 0)
+        ta._cursor_row = len(ta._lines) - 1
+        ta._cursor_col = len(ta._lines[-1])
+        ta._desired_col = ta._cursor_col
+        ta.invalidate()
+
+    def _find(self) -> None:
+        ta = self._textarea
+        ta._search_active = True
+        ta._search_cursor = 0
+        ta._find_all_matches()
+        ta.invalidate()
+
+    def _replace(self) -> None:
+        ta = self._textarea
+        ta._search_active = True
+        ta._search_cursor = 1
+        ta._find_all_matches()
+        ta.invalidate()
+
     def _on_close(self) -> None:
         if self in self.app._editor_windows:
             self.app._editor_windows.remove(self)
@@ -824,17 +889,17 @@ class EditorWindow:
                 MenuItem("Close Window", shortcut="Ctrl+W", action=lambda: self.window._do_close()),
             ]),
             Menu("Edit", [
-                MenuItem("Undo", shortcut="Ctrl+Z"),
-                MenuItem("Redo", shortcut="Ctrl+Y"),
+                MenuItem("Undo", shortcut="Ctrl+Z", action=self._undo),
+                MenuItem("Redo", shortcut="Ctrl+Y", action=self._redo),
                 MenuItem.separator(),
-                MenuItem("Cut", shortcut="Ctrl+X"),
-                MenuItem("Copy", shortcut="Ctrl+C"),
-                MenuItem("Paste", shortcut="Ctrl+V"),
+                MenuItem("Cut", shortcut="Ctrl+X", action=self._cut),
+                MenuItem("Copy", shortcut="Ctrl+C", action=self._copy),
+                MenuItem("Paste", shortcut="Ctrl+V", action=self._paste),
                 MenuItem.separator(),
-                MenuItem("Select All", shortcut="Ctrl+A"),
+                MenuItem("Select All", shortcut="Ctrl+A", action=self._select_all),
                 MenuItem.separator(),
-                MenuItem("Find...", shortcut="Ctrl+F"),
-                MenuItem("Replace...", shortcut="Ctrl+H"),
+                MenuItem("Find...", shortcut="Ctrl+F", action=self._find),
+                MenuItem("Replace...", shortcut="Ctrl+H", action=self._replace),
             ]),
         ])
 
