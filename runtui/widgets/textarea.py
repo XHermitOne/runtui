@@ -77,6 +77,8 @@ class TextArea(Widget):
         self._lines = value.split("\n") if value else [""]
         self._cursor_row = 0
         self._cursor_col = 0
+        self._scroll_y = 0
+        self._scroll_x = 0
         self._sel_anchor = None
         self._syntax_cache.clear()
         self.invalidate()
@@ -343,6 +345,10 @@ class TextArea(Widget):
         search_rows = 2 if self._search_active else 0
         content_h = max(1, text_h - search_rows)
 
+        # Clamp scroll positions to valid ranges
+        self._scroll_y = max(0, min(self._scroll_y, max(0, len(self._lines) - 1)))
+        self._scroll_x = max(0, self._scroll_x)
+
         # Fill background
         painter.fill_rect(lx, ly, text_w, content_h, bg=bg)
 
@@ -359,14 +365,14 @@ class TextArea(Widget):
         # Draw visible lines
         for row in range(content_h):
             line_idx = self._scroll_y + row
-            if line_idx >= len(self._lines):
+            if line_idx < 0 or line_idx >= len(self._lines):
                 break
             line = self._lines[line_idx]
 
             # Draw character by character for selection + search + syntax highlighting
             for col in range(text_w):
                 char_idx = self._scroll_x + col
-                if char_idx >= len(line):
+                if char_idx < 0 or char_idx >= len(line):
                     break
                 ch = line[char_idx]
                 syn = self._syntax_color(line_idx, char_idx)
@@ -559,10 +565,12 @@ class TextArea(Widget):
             self._scroll_y = self._cursor_row
         elif self._cursor_row >= self._scroll_y + h:
             self._scroll_y = self._cursor_row - h + 1
+        self._scroll_y = max(0, self._scroll_y)
         if self._cursor_col < self._scroll_x:
             self._scroll_x = self._cursor_col
         elif self._cursor_col >= self._scroll_x + w:
             self._scroll_x = self._cursor_col - w + 1
+        self._scroll_x = max(0, self._scroll_x)
 
     def _save_undo(self) -> None:
         self._undo_stack.append(([*self._lines], self._cursor_row, self._cursor_col))
@@ -579,6 +587,7 @@ class TextArea(Widget):
         self._cursor_row = row
         self._cursor_col = col
         self._sel_anchor = None
+        self._ensure_cursor_visible()
         self.invalidate()
 
     def _redo(self) -> None:
@@ -590,6 +599,7 @@ class TextArea(Widget):
         self._cursor_row = row
         self._cursor_col = col
         self._sel_anchor = None
+        self._ensure_cursor_visible()
         self.invalidate()
 
     def _handle_key(self, event: KeyEvent) -> None:
