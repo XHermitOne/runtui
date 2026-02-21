@@ -31,6 +31,11 @@ Works seamlessly on **Linux**, **macOS**, and **Windows**
 pip install runtui
 ```
 
+## Run
+```bash
+python -m runtui.tui_os
+```
+
 More examples in the [`examples/`](examples/) folder:
 
 - `cal.py`               — Calendar
