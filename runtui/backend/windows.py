@@ -6,13 +6,10 @@ import os
 import sys
 from typing import Any
 
-from ..core.event import Event, KeyEvent, MouseEvent, ResizeEvent
-from ..core.keys import (
-    Keys, Modifiers, MouseAction, MouseButton,
-    _CSI_KEY_MAP, _CSI_TILDE_MAP, decode_modifiers_from_param,
-)
+from ..core.event import Event
 from ..core.types import ColorDepth
 from .base import Backend
+from .input_decoder import AnsiInputDecoder
 
 
 class WindowsBackend(Backend):
@@ -25,7 +22,7 @@ class WindowsBackend(Backend):
     def __init__(self) -> None:
         self._original_mode_in: int = 0
         self._original_mode_out: int = 0
-        self._input_buffer = b""
+        self._decoder = AnsiInputDecoder()
         self._kernel32: Any = None
         self._use_vt: bool = False
 
@@ -127,13 +124,7 @@ class WindowsBackend(Backend):
     def decode_input(self, raw: bytes) -> list[Event]:
         """Decode input -- delegate to the same ANSI parser as Unix backend."""
         # Windows Terminal sends the same ANSI sequences as xterm
-        from .unix import UnixBackend
-        # Reuse Unix decoder
-        parser = UnixBackend()
-        parser._input_buffer = self._input_buffer
-        events = parser.decode_input(raw)
-        self._input_buffer = parser._input_buffer
-        return events
+        return self._decoder.feed(raw)
 
     def write(self, data: str) -> None:
         sys.stdout.buffer.write(data.encode("utf-8"))

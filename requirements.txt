@@ -1,3 +1,4 @@
 send2trash
 Pillow
 pyte
+pywinpty; platform_system == "Windows"

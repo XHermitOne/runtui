@@ -24,7 +24,8 @@ classifiers = [
 dependencies = [
     "send2trash",
     "Pillow",
-    "pyte"
+  "pyte",
+  "pywinpty; platform_system == 'Windows'"
 ]
 [project.urls]
 Homepage = "https://github.com/erickrus/runtui"

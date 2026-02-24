@@ -15,9 +15,10 @@ Features:
 from __future__ import annotations
 
 import os
-import subprocess
 import platform
-from typing import TYPE_CHECKING
+import subprocess
+import threading
+import time
 
 import pyte
 
@@ -27,10 +28,8 @@ from ..core.keys import Keys, Modifiers, MouseAction as MA, MouseButton
 from ..core.pty_process import PtyProcess
 from ..core.types import Attrs, Color, Rect, Size
 from ..rendering.painter import Painter
+from ..backend.base import Backend
 from .base import Widget
-
-if TYPE_CHECKING:
-    from ..backend.base import Backend
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +131,12 @@ class TerminalWidget(Widget):
         height: int = 24,
     ) -> None:
         super().__init__(id=id, x=x, y=y, width=width, height=height)
-        self._shell = shell or os.environ.get("SHELL", "/bin/bash")
+        default_shell = (
+            os.environ.get("COMSPEC", "cmd.exe")
+            if os.name == "nt"
+            else os.environ.get("SHELL", "/bin/bash")
+        )
+        self._shell = shell or default_shell
         self._running = False
         self.can_focus = True
 
@@ -166,6 +170,11 @@ class TerminalWidget(Widget):
         self._sel_anchor: tuple[int, int] | None = None  # start of selection
         self._sel_end: tuple[int, int] | None = None      # end of selection
         self._sel_dragging = False
+
+        # PTY polling fallback (for backends without fd registration)
+        self._poll_thread: threading.Thread | None = None
+        self._poll_stop = threading.Event()
+        self._using_backend_polling = False
 
         self.on(KeyEvent, self._handle_key)
         self.on(MouseEvent, self._handle_mouse)
@@ -201,9 +210,9 @@ class TerminalWidget(Widget):
 
         # Build argv
         if command:
-            argv = [self._shell, "-c", command]
+            argv = self._build_command_argv(command)
         else:
-            argv = [self._shell, "-l"]  # login shell
+            argv = self._build_default_shell_argv()
 
         # Build env
         env = os.environ.copy()
@@ -222,10 +231,32 @@ class TerminalWidget(Widget):
         self._last_cols = cols
 
         # Register the PTY master fd with the backend for select()-based polling
-        if self._backend is not None and self._pty.master_fd >= 0:
+        backend_supports_poll = self._backend_supports_pty_polling()
+        if backend_supports_poll and self._pty.master_fd >= 0:
             self._backend.register_pty_fd(self._pty.master_fd, self._on_pty_data)
+            self._using_backend_polling = True
+        else:
+            self._start_poll_thread()
 
         self.invalidate()
+
+    def _build_command_argv(self, command: str) -> list[str]:
+        """Build the argv for launching the shell with a specific command."""
+        if os.name == "nt":
+            shell_lower = self._shell.lower()
+            if "powershell" in shell_lower or shell_lower.endswith("pwsh.exe"):
+                return [self._shell, "-NoLogo", "-Command", command]
+            return [self._shell, "/C", command]
+        return [self._shell, "-c", command]
+
+    def _build_default_shell_argv(self) -> list[str]:
+        """Build argv for launching an interactive shell session."""
+        if os.name == "nt":
+            shell_lower = self._shell.lower()
+            if "powershell" in shell_lower or shell_lower.endswith("pwsh.exe"):
+                return [self._shell, "-NoLogo"]
+            return [self._shell]
+        return [self._shell, "-l"]
 
     def _on_pty_data(self, data: bytes) -> None:
         """Callback invoked by the backend when PTY master fd has data."""
@@ -682,8 +713,9 @@ class TerminalWidget(Widget):
 
     def stop(self) -> None:
         """Stop the terminal and kill the child process."""
-        if self._backend is not None and self._pty.master_fd >= 0:
+        if self._using_backend_polling and self._backend is not None and self._pty.master_fd >= 0:
             self._backend.unregister_pty_fd(self._pty.master_fd)
+        self._stop_poll_thread()
         self._pty.terminate()
         self._running = False
 
@@ -703,3 +735,38 @@ class TerminalWidget(Widget):
             self.stop()
         except Exception:
             pass
+
+    def _backend_supports_pty_polling(self) -> bool:
+        if self._backend is None:
+            return False
+        backend_cls = type(self._backend)
+        return backend_cls.register_pty_fd is not Backend.register_pty_fd
+
+    def _start_poll_thread(self) -> None:
+        if self._poll_thread and self._poll_thread.is_alive():
+            return
+        self._poll_stop.clear()
+
+        def _poll_loop() -> None:
+            while not self._poll_stop.is_set() and self._running:
+                try:
+                    data = self._pty.read()
+                    if data:
+                        self._on_pty_data(data)
+                    else:
+                        time.sleep(0.01)
+                except EOFError:
+                    self._on_pty_data(b"")
+                    break
+                except Exception:
+                    time.sleep(0.05)
+
+        self._poll_thread = threading.Thread(target=_poll_loop, name="TerminalWidgetPTY", daemon=True)
+        self._poll_thread.start()
+
+    def _stop_poll_thread(self) -> None:
+        self._poll_stop.set()
+        if self._poll_thread and self._poll_thread.is_alive():
+            self._poll_thread.join(timeout=0.2)
+        self._poll_thread = None
+        self._using_backend_polling = False
