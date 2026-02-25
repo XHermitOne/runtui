@@ -1116,6 +1116,9 @@ class TuiOS(App):
         # Periodic repaint to pick up subprocess output from reader threads
         self.set_interval(0.1, self._tick)
 
+        # Mandatory full refresh every 5 seconds to keep UI in sync
+        self.set_interval(5.0, self._force_refresh)
+
     def _tick(self) -> None:
         """Periodic check for dead child processes and repaint."""
         for tw in self._terminal_windows:
@@ -1124,6 +1127,10 @@ class TuiOS(App):
             if tw._terminal._running:
                 self._needs_repaint = True
                 return
+    
+    def _force_refresh(self) -> None:
+        """Force a full screen refresh periodically."""
+        self.invalidate_all()
 
     # --- System Menu (always leftmost, macOS "apple" menu equivalent) ---
 
