@@ -6,7 +6,7 @@ import os
 import sys
 from typing import Any
 
-from ..core.event import Event
+from ..core.event import Event, ResizeEvent
 from ..core.types import ColorDepth
 from .base import Backend
 from .input_decoder import AnsiInputDecoder
@@ -25,6 +25,9 @@ class WindowsBackend(Backend):
         self._decoder = AnsiInputDecoder()
         self._kernel32: Any = None
         self._use_vt: bool = False
+        self._pending_resize = False
+        self._cached_cols = 0
+        self._cached_rows = 0
 
     def init(self) -> None:
         try:
@@ -78,6 +81,9 @@ class WindowsBackend(Backend):
         self.enable_mouse()
         self.clear_screen()
         self.flush()
+        cols, rows = self.get_size()
+        self._cached_cols = cols
+        self._cached_rows = rows
 
     def shutdown(self) -> None:
         self.disable_mouse()
@@ -104,25 +110,38 @@ class WindowsBackend(Backend):
 
     def read_input(self) -> bytes:
         """Read input using msvcrt for non-blocking key detection."""
+        data = b""
         try:
             import msvcrt
-            data = b""
             while msvcrt.kbhit():
                 data += msvcrt.getch()
-            return data
         except ImportError:
             # Fallback for environments without msvcrt
             import select
             try:
                 rlist, _, _ = select.select([sys.stdin], [], [], 0.01)
                 if rlist:
-                    return sys.stdin.buffer.read1(4096)  # type: ignore
+                    data = sys.stdin.buffer.read1(4096)  # type: ignore
             except (OSError, AttributeError):
                 pass
-            return b""
+
+        self._poll_resize()
+        if not data and self._pending_resize:
+            self._pending_resize = False
+            return b"\x1b[RESIZE]"
+        return data
 
     def decode_input(self, raw: bytes) -> list[Event]:
         """Decode input -- delegate to the same ANSI parser as Unix backend."""
+        if not raw:
+            return []
+
+        if raw == b"\x1b[RESIZE]":
+            cols, rows = self.get_size()
+            self._cached_cols = cols
+            self._cached_rows = rows
+            return [ResizeEvent(width=cols, height=rows)]
+
         # Windows Terminal sends the same ANSI sequences as xterm
         return self._decoder.feed(raw)
 
@@ -148,3 +167,14 @@ class WindowsBackend(Backend):
         if os.environ.get("ConEmuANSI", "") == "ON":
             return ColorDepth.TRUE_COLOR
         return ColorDepth.COLORS_256
+
+    def _poll_resize(self) -> None:
+        try:
+            size = os.get_terminal_size()
+        except OSError:
+            return
+        cols, rows = size.columns, size.lines
+        if cols != self._cached_cols or rows != self._cached_rows:
+            self._cached_cols = cols
+            self._cached_rows = rows
+            self._pending_resize = True

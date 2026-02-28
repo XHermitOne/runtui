@@ -89,13 +89,68 @@ def _pyte_attrs_to_runtui(char: pyte.screens.Char) -> Attrs:
     return attrs
 
 
+def _normalize_windows_newlines(text: str) -> str:
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+
+
+def _copy_to_windows_clipboard(text: str) -> bool:
+    try:
+        import ctypes
+
+        CF_UNICODETEXT = 13
+        GMEM_MOVEABLE = 0x0002
+
+        kernel32 = ctypes.windll.kernel32
+        user32 = ctypes.windll.user32
+
+        normalized = _normalize_windows_newlines(text)
+        data = (normalized + "\x00").encode("utf-16le")
+        size = len(data)
+
+        hglobal = kernel32.GlobalAlloc(GMEM_MOVEABLE, size)
+        if not hglobal:
+            return False
+        ptr = kernel32.GlobalLock(hglobal)
+        if not ptr:
+            kernel32.GlobalFree(hglobal)
+            return False
+        ctypes.memmove(ptr, data, size)
+        kernel32.GlobalUnlock(hglobal)
+
+        opened = bool(user32.OpenClipboard(None))
+        if not opened:
+            kernel32.GlobalFree(hglobal)
+            return False
+        try:
+            user32.EmptyClipboard()
+            if not user32.SetClipboardData(CF_UNICODETEXT, hglobal):
+                kernel32.GlobalFree(hglobal)
+                return False
+            hglobal = None  # ownership transferred
+        finally:
+            user32.CloseClipboard()
+        return True
+    except Exception:
+        return False
+
+
 def _copy_to_clipboard(text: str) -> None:
     """Copy text to the system clipboard (best-effort)."""
     try:
         system = platform.system()
         if system == "Darwin":
             subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE).communicate(text.encode("utf-8"))
-        elif system == "Linux":
+            return
+        if system == "Windows":
+            if _copy_to_windows_clipboard(text):
+                return
+            try:
+                normalized = _normalize_windows_newlines(text)
+                subprocess.Popen(["clip.exe"], stdin=subprocess.PIPE).communicate(normalized.encode("utf-16le"))
+                return
+            except FileNotFoundError:
+                pass
+        if system == "Linux":
             # Try xclip first, then xsel
             for cmd in (["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
                 try:
