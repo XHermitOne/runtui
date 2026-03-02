@@ -686,7 +686,10 @@ class TerminalWindow:
     def _clear(self) -> None:
         # Send "clear" to the PTY — the shell handles it natively
         if self._terminal._running and not self._terminal._child_exited:
-            self._terminal.write_input("clear\n")
+            if sys.platform.startswith("win"):
+                self._terminal.write_input("cls\r\n")
+            else:
+                self._terminal.write_input("clear\n")
         self._terminal.invalidate()
 
 
@@ -1009,7 +1012,7 @@ class LoadedAppWindowWrapper:
             if item.is_separator:
                 continue
             if self._is_quit_label(item.label):
-                item.label = "Close"
+                item.label = "Close Window" # "Close"
                 item.shortcut = ""
                 item.action = self._close_all_windows
             if item.submenu:
@@ -1135,7 +1138,7 @@ class TuiOS(App):
 
     def _system_menu(self) -> Menu:
         """The persistent system menu (leftmost), like macOS apple menu."""
-        return Menu("TUI", [
+        return Menu("≡", [
             MenuItem("About TUI-OS", action=self._show_about),
             MenuItem.separator(),
             MenuItem("Preferences...", action=self._show_preferences),
@@ -1484,8 +1487,7 @@ class TuiOS(App):
                 "Keyboard shortcuts:\n"
                 "  Ctrl+N  New Finder\n"
                 "  Ctrl+T  New Terminal\n"
-                "  Ctrl+Q  Quit\n"
-                "  Alt+Tab Window cycle"
+                "  Ctrl+Q  Quit"
             ),
             buttons=["OK"],
         )
