@@ -51,6 +51,7 @@ More examples in the [`examples/`](examples/) folder:
 - `notes.py`             — mac os like personal notes
 - `rad_designer.py`      — visual designer (very cool!)
 - `puzzle.py`            — mac os like puzzle game
+- `trome.py`             — a Text UI browser via chrome mirror (very cool!)
 - `tui_os.py`            — tui desktop / OS-like interface
 
 It is highly recommended to run everything inside `tui_os.py` by browse these python files in Finder.
