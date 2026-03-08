@@ -23,6 +23,7 @@ Works seamlessly on **Linux**, **macOS**, and **Windows**
 - Dialogs: MessageBox, File Open/Save, Custom Forms
 - **Visual RAD designer** (`rad_designer.py`) — drag & drop UI building + code generation
 - Embedded **terminal** widget with PTY support (run vim, htop, bash, python REPL, … inside your app!)
+- Browser under Text UI (can browse any website, a full chrome mirror)
 - Clean event loop, timers, key bindings, context menus
 
 ## Installation
