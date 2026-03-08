@@ -146,7 +146,7 @@ class WindowsBackend(Backend):
         return self._decoder.feed(raw)
 
     def write(self, data: str) -> None:
-        sys.stdout.buffer.write(data.encode("utf-8"))
+        sys.stdout.buffer.write(data.encode("utf-8", errors="replace"))
 
     def flush(self) -> None:
         sys.stdout.buffer.flush()

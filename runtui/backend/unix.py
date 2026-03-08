@@ -115,7 +115,7 @@ class UnixBackend(Backend):
 
 
     def write(self, data: str) -> None:
-        sys.stdout.buffer.write(data.encode("utf-8"))
+        sys.stdout.buffer.write(data.encode("utf-8", errors="replace"))
 
     def flush(self) -> None:
         sys.stdout.buffer.flush()
