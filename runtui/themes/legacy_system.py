@@ -12,8 +12,10 @@ _BIOS_YELLOW = Color.from_hex("#ffff55")
 _BIOS_CYAN = Color.from_hex("#00aaaa")      # Used for selections
 _BIOS_BLACK = Color.from_hex("#000000")
 
+NAME = "legacy_system"
+
 legacy_system_theme = ThemeDefinition(
-    name="legacy_system",
+    name=NAME,
     colors={
         "desktop.bg": _BIOS_BLUE,
         "desktop.fg": _BIOS_GRAY,

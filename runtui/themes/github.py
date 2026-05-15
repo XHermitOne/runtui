@@ -16,8 +16,10 @@ _YELLOW_ATTN = Color.from_hex("#9a6700")
 _INPUT_BG = Color.from_hex("#f6f8fa")
 _SELECTION = Color.from_hex("#ddf4ff")
 
+NAME = "github"
+
 github_theme = ThemeDefinition(
-    name="github",
+    name=NAME,
     colors={
         "desktop.bg": _BG_GRAY,
         "desktop.fg": _TEXT_MAIN,

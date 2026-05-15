@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from runtui import (
     App, Window, Label, Button, TextInput, ListBox,
     MenuBar, Menu, MenuItem, MessageBox, OpenFileDialog, SaveFileDialog,
-    Color, __version__,
+    Color, __version__
 )
 from runtui.widgets.container import Container
 from runtui.layout.absolute import AbsoluteLayout
@@ -42,7 +42,7 @@ from runtui.rad.deserializer import load_json, load_design, deserialize_widget, 
 from runtui.rad.codegen import generate_python, save_python
 from runtui.rad.runner import preview_in_app
 from runtui.rad.menu_editor import MenuEditorDialog, MenuDesignData
-
+from runtui import themes
 
 class PropertiesPanel:
     """Manages the properties window, showing editable fields for the selected widget."""
@@ -586,7 +586,10 @@ def main(*argv):
         elif option == '--gen_app':
             pass
         elif option == '--theme':
-            theme = arg
+            if arg in themes.AVAILABLE_THEMES:
+                theme = arg
+            else:
+                print('Not available theme <%s>' % arg)
         else:
             print('Warning. Not supported option <%s>' % option)
 
@@ -599,7 +602,6 @@ def main(*argv):
             app._current_file = json_filename
             app.run()
         else:
-            # app.quit()
             print('Error. File <%s> not found' % json_filename)
     except:
         print(u'RAD designer error')

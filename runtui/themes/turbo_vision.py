@@ -18,8 +18,10 @@ _TV_DARK_GRAY = Color.from_index(8)  # Dark gray (shadows, disabled)
 _TV_LIGHT_BLUE = Color.from_index(12)  # Bright blue (desktop pattern)
 _TV_BRIGHT_CYAN = Color.from_index(14) # Bright cyan
 
+NAME = "turbo_vision"
+
 turbo_vision_theme = ThemeDefinition(
-    name="turbo_vision",
+    name=NAME,
     colors={
         # Desktop
         "desktop.bg": _TV_BLUE,

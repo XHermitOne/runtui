@@ -18,6 +18,8 @@ _ORANGE = Color.from_hex("#ce9178")
 _YELLOW = Color.from_hex("#dcdcaa")
 _WHITE = Color.from_hex("#ffffff")
 
+NAME = "vscode"
+
 vscode_theme = ThemeDefinition(
     name="vscode",
     colors={

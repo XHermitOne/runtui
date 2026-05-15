@@ -10,8 +10,10 @@ _MED_GRAY = Color.from_hex("#777777")
 _LIGHT_GRAY = Color.from_hex("#cccccc")
 _WHITE = Color.from_hex("#ffffff")
 
+NAME = "black_white"
+
 black_white_theme = ThemeDefinition(
-    name="black_white",
+    name=NAME,
     colors={
         "desktop.bg": _BLACK,
         "desktop.fg": _LIGHT_GRAY,

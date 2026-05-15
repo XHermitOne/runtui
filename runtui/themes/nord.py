@@ -21,8 +21,10 @@ _NORD13 = Color.from_hex("#EBCB8B")
 _NORD14 = Color.from_hex("#A3BE8C")
 _NORD15 = Color.from_hex("#B48EAD")
 
+NAME = "nord"
+
 nord_theme = ThemeDefinition(
-    name="nord",
+    name=NAME,
     colors={
         "desktop.bg": _NORD0,
         "desktop.fg": _NORD1,

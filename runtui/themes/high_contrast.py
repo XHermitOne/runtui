@@ -10,8 +10,10 @@ _CYAN = Color.from_hex("#00ffff")
 _YELLOW = Color.from_hex("#ffff00")
 _GREEN_BRIGHT = Color.from_hex("#00ff00")
 
+NAME = "high_contrast"
+
 high_contrast_theme = ThemeDefinition(
-    name="high_contrast",
+    name=NAME,
     colors={
         "desktop.bg": _BLACK,
         "desktop.fg": _WHITE,

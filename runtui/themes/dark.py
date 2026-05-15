@@ -18,8 +18,10 @@ _YELLOW = Color.from_rgb(255, 235, 59)
 _DIM = Color.from_rgb(100, 100, 100)
 _SHADOW = Color.from_rgb(10, 10, 10)
 
+NAME = "dark"
+
 dark_theme = ThemeDefinition(
-    name="dark",
+    name=NAME,
     colors={
         "desktop.bg": Color.from_rgb(20, 20, 20),
         "desktop.fg": Color.from_rgb(40, 40, 40),

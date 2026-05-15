@@ -21,8 +21,10 @@ _BLUE = Color.from_hex("#268bd2")
 _CYAN = Color.from_hex("#2aa198")
 _GREEN = Color.from_hex("#859900")
 
+NAME = "solarized"
+
 solarized_theme = ThemeDefinition(
-    name="solarized",
+    name=NAME,
     colors={
         "desktop.bg": _BASE03,
         "desktop.fg": _BASE02,

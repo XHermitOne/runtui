@@ -18,8 +18,10 @@ _PURPLE = Color.from_hex("#b16286")
 _AQUA = Color.from_hex("#689d6a")
 _ORANGE = Color.from_hex("#d65d0e")
 
+NAME = "gruvbox"
+
 gruvbox_theme = ThemeDefinition(
-    name="gruvbox",
+    name=NAME,
     colors={
         "desktop.bg": _BG0,
         "desktop.fg": _FG1,
