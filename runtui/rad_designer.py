@@ -4,10 +4,24 @@
 A Visual Basic / Delphi-style IDE running entirely in the terminal.
 Design forms by dragging widgets from the toolbox, edit properties,
 save/load as JSON, export as runnable Python, and preview live.
+
+Command line parameters:
+
+        python3 -m runtui.rad_designer [Launch parameters]
+
+Launch parameters:
+
+        --help|-h|-?        Print help lines
+        --version|-v        Print version of the program
+        --open=             JSON file to open
+        --gen_app           Generate application file
+        --theme=            Available theme
 """
 
 import sys
 import os
+import os.path
+import getopt
 
 # Add parent dir to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from runtui import (
     App, Window, Label, Button, TextInput, ListBox,
     MenuBar, Menu, MenuItem, MessageBox, OpenFileDialog, SaveFileDialog,
-    Color,
+    Color, __version__,
 )
 from runtui.widgets.container import Container
 from runtui.layout.absolute import AbsoluteLayout
@@ -219,6 +233,9 @@ class RADDesignerApp(App):
         self._create_toolbox()
         self._create_canvas()
         self._create_properties()
+
+        if self._current_file and os.path.exists(self._current_file):
+            self._finish_open(self._current_file)
 
     def _setup_menu(self) -> None:
         menu = MenuBar(menus=[
@@ -535,6 +552,59 @@ class RADDesignerApp(App):
         mb.invalidate()
 
 
-if __name__ == "__main__":
-    app = RADDesignerApp()
-    app.run()
+def main(*argv):
+    """
+    Main function triggered.
+
+    :param argv: Command line parameters.
+    """
+    # Parse command line arguments
+    try:
+        options, args = getopt.getopt(argv, 'h?v',
+                                      ['help', 'version',
+                                       'open=', 'gen_app', 'theme='])
+    except getopt.error as msg:
+        print(str(msg))
+        print(__doc__)
+        sys.exit(2)
+
+    if any([option in ('-h', '--help', '-?') for option, arg in options]):
+        print(__doc__)
+        sys.exit(0)
+
+    if any([option in ('-v', '--version') for option, arg in options]):
+        str_version = 'RunTUI. RAD designer %s' % __version__
+        print(str_version)
+        sys.exit(0)
+
+    json_filename = None
+    theme = None
+
+    for option, arg in options:
+        if option == '--open':
+            json_filename = arg
+        elif option == '--gen_app':
+            pass
+        elif option == '--theme':
+            theme = arg
+        else:
+            print('Warning. Not supported option <%s>' % option)
+
+    try:
+        app = RADDesignerApp()
+        if theme is not None:
+            app._initial_theme = theme
+
+        if json_filename and os.path.exists(json_filename):
+            app._current_file = json_filename
+            app.run()
+        else:
+            # app.quit()
+            print('Error. File <%s> not found' % json_filename)
+    except:
+        print(u'RAD designer error')
+        raise
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])
