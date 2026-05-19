@@ -579,12 +579,13 @@ def main(*argv):
 
     json_filename = None
     theme = None
+    do_gen_app = False
 
     for option, arg in options:
         if option == '--open':
             json_filename = arg
         elif option == '--gen_app':
-            pass
+            do_gen_app = True
         elif option == '--theme':
             if arg in themes.AVAILABLE_THEMES:
                 theme = arg
@@ -598,9 +599,15 @@ def main(*argv):
         if theme is not None:
             app._initial_theme = theme
 
-        if json_filename and os.path.exists(json_filename):
+        if json_filename and os.path.exists(json_filename) and not do_gen_app:
             app._current_file = json_filename
             app.run()
+        elif json_filename and os.path.exists(json_filename) and do_gen_app:
+            app._current_file = json_filename
+            app_filename = os.path.splitext(json_filename)[0] + '_app.py'
+            data = load_json(path=json_filename)
+            code = generate_python(data)
+            save_python(code, app_filename)
         else:
             print('Error. File <%s> not found' % json_filename)
     except:
